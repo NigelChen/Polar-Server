@@ -34,6 +34,7 @@ class Client:
 			self.usersock.close()
 			print "Disconnected the client"
 		finally:
+			# TODO: Store user names so that way people can know who disconnected
 			msg = '{"type": "message", "body": "disconnected", "name": "system"}'
 			for i in self.parent.clients:
 				try:
