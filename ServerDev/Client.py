@@ -14,6 +14,8 @@ class Client:
 		Relays message to the client list
 	'''
 	def sendMessage(self, message):
+		# TODO: handle different types of packets
+		# if you're reading this, you're gay D:
 		self.parent.broadcast(message)
 
 
