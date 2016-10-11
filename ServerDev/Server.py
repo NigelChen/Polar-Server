@@ -8,9 +8,13 @@ import gc
 import Client
 
 class server:
+
+
 	sock = None
 	clients = {}
 	deadClients = []
+
+
 
 	'''
 		Checks and handles sockets connecting
@@ -18,24 +22,25 @@ class server:
 	def __init__(self):
 		self.startServer()
 		global server
+		cycle = 0
+
 
 		while True:
+			print '[Debug] Heartbeat #' + str(cycle) #for debugging purposes, counts each cycle
 			gc.collect()
 
 			# Handle the dead sockets
 			if not int(len(self.deadClients)) == 0:
 				for (i, u) in enumerate(self.deadClients):
 					if self.deadClients[i] in self.clients:
-						self.disconnect(self.deadClients[i])
+						self.clients[self.deadClients[i]].died()
 					del self.deadClients[i]
 
 			# Add all the clients to the socket list
 			_select = [self.sock]
 			for i in self.clients:
 				_select.append(i)
-
 			read, _, error = select.select(_select, [], _select, None)
-
 			if self.sock in error:
 				self.startServer()
 				continue
@@ -51,19 +56,27 @@ class server:
 
 					try:
 						data = _socket.recv(1024)
+						#check if user has completed the websocket handshake
+						if not user.handshake_completed:
+							###websocket handshake
+							headers = data
+							headers = self.getSockKey(headers[headers.index(headers[headers.index('Sec-WebSocket-Key: ')+len('Sec-WebSocket-Key: '):]):].split("\r\n")[0])
+							headers = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + headers + "\r\n\r\n"
+							user.usersock.send(headers)
+							user.handshake_completed = True
 					except: pass
 
 					if not data:
-						try: self.disconnect(_socket)
+						try: self.clients[_socket].died()
 						except: continue
 					else:
 						try:
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
-							user.broadcast(str(self.parseMessage(bytearray(data))))
+							self.broadcast(str(self.parseMessage(bytearray(data))))
 						except Exception, e:
 							pass
-
+			cycle +=1 #debugging purposes
 	'''
 		Initialize all the socket stuff here
 	'''
@@ -71,20 +84,31 @@ class server:
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
 		self.sock.bind(('0.0.0.0', 1337))
+
 		self.sock.listen(True)
 
-	def disconnect(self, sock):
-		self.clients[sock].died()
-		del self.clients[sock]
+	'''
+		Used to encode the websocket key to complete the handshake
+	'''
+	def getSockKey(self,key):
+		MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+		m = hashlib.sha1(key+MAGIC)
+		return base64.b64encode(m.digest())
 
-	def handleMessage(self, user, parsedData):
-		user.broadcast(parsedData)
+	'''
+		Broadcasts a message to every single client
+	'''
+	def broadcast(self, msg):
+		for i in self.clients:
+			for j in self.pack_message(msg):
+				if isinstance(j, (int, long)):
+					i.send(chr(j))
+				else:
+					i.send(j)
 
-	def handleOnline(self, user, parsedData):
-		user.broadcast(parsedData)
-
-	#used to encode any messages for sending through websocket to
-	#comply with websocket standards
+	'''
+		Encode any messages to be sent to the client complying with websocket standards
+	'''
 	def pack_message(self,msg):
 		payload = []
 		payload.append(129)
@@ -96,7 +120,9 @@ class server:
 		payload.append(msg)
 		return payload
 
-	#unmasks a message sent from the client.
+	'''
+		Unmasks any messages sent from the client to the server to be read
+	'''
 	def parseMessage(self,msg):
 		startIndex = 2
 		if (msg[1]&127) == 126:

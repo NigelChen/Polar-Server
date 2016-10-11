@@ -2,48 +2,32 @@ import base64, hashlib
 
 class Client:
 
+	'''
+		Initializes information on the client
+	'''
 	def __init__(self, usersock, parent):
 		self.usersock = usersock
 		self.parent = parent
+		self.handshake_completed = False
 
-		headers = usersock.recv(1024)
-		headers = self.getSockKey(headers[headers.index(headers[headers.index('Sec-WebSocket-Key: ')+len('Sec-WebSocket-Key: '):]):].split("\r\n")[0])
-		headers = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + headers + "\r\n\r\n"
-		usersock.send(headers)
-
-	def getSockKey(self,key):
-		MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-		m = hashlib.sha1(key+MAGIC)
-		return base64.b64encode(m.digest())
-
-	def broadcast(self, msg):
-		for i in self.parent.clients:
-			for j in self.parent.pack_message(msg):
-				if isinstance(j, (int, long)):
-					i.send(chr(j))
-				else:
-					i.send(j)
-
+	'''
+		Relays message to the client list
+	'''
 	def sendMessage(self, message):
-		self.broadcast(message)
+		self.parent.broadcast(message)
 
 
-	# Might need to clean this method up
+	'''
+		Deletes self from the client list when it is disconnected.
+		Has to be called by the server to work.
+	'''
 	def died(self):
 		try:
 			self.usersock.close()
 			print "Disconnected the client"
 		finally:
 			# TODO: Store user names so that way people can know who disconnected
+			del self.parent.clients[self.usersock]
 			msg = '{"type": "message", "body": "disconnected", "name": "system"}'
-			for i in self.parent.clients:
-				try:
-					if i != self.usersock:
-						for j in self.parent.pack_message(msg):
-							if isinstance(j, (int, long)):
-								i.send(chr(j))
-							else:
-								i.send(j)
-				except Exception, e:
-					print e
+			self.parent.broadcast(msg)
 
