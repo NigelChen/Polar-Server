@@ -73,7 +73,20 @@ class server:
 						try:
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
+							
+							# Get the name from the user
+							if parsed['type'] == "join":
+								user.name = parsed['name']
+								print user.name
+								
+								# No idea how to broadcast these types of messages from server -> client :(
+								# TODO: Notify the user who all is currently in the chat room (Probably get the client to append them to the userlist)
+								self.broadcast("{'message': 'Welcome to the chat server!', 'type': 'system', 'name': 'System', 'avi': 'profile.png'}")
 							self.broadcast(str(self.parseMessage(bytearray(data))))
+						except ValueError:
+							# Typically when the user disconnects, python throws up a ValueError saying that No JSON could be decoded, so that is an indication that the user has left
+							# TODO: Server notifies everyone that the user has left the chat room
+							print "User has decided to disconnect, notify everyone that he left"
 						except Exception, e:
 							pass
 			cycle +=1 #debugging purposes
