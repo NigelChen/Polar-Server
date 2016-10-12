@@ -1,6 +1,8 @@
 import base64, hashlib
 
 class Client:
+	# Stores the name of the user in this variable
+	name = ""
 
 	'''
 		Initializes information on the client
@@ -28,7 +30,6 @@ class Client:
 			self.usersock.close()
 			print "Disconnected the client"
 		finally:
-			# TODO: Store user names so that way people can know who disconnected
 			del self.parent.clients[self.usersock]
 			msg = '{"type": "message", "body": "disconnected", "name": "system"}'
 			self.parent.broadcast(msg)
