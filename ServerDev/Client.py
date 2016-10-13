@@ -17,11 +17,9 @@ class Client:
 		Relays message to the client list
 	'''
 	def sendMessage(self, message):
-<<<<<<< HEAD
 		#stfu
-=======
 		# if you're reading this, you're gay D:
->>>>>>> origin/master
+		# some crap
 		self.parent.broadcast(message)
 
 	'''
