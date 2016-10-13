@@ -70,8 +70,9 @@ class server:
 					if not data or len(data) <=0:
 						try:
 							tempname = self.clients[_socket].getName()
+							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
 							self.clients[_socket].died()
-							self.broadcast(str('{"message": "'+ str(tempname) +' has left the room.", "type": "system", "name": "System", "avi": "profile.png"}'))
+							self.disconnect(_socket)
 						except: continue
 					else:
 
@@ -82,13 +83,21 @@ class server:
 							# Get the name from the user
 							if parsed['type'] == "join":
 								user.name = parsed['name']
-								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}',self.clients[_socket])
+								print user.name
+								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
+								onlineUsers = []
+								for i in self.clients:
+									onlineUsers.append(self.clients[i].name)
+								self.send_to_client('{"message": "'+ ', '.join(onlineUsers) +'", "type": "onSet", "name": "System", "avi": "n/a"}', self.clients[_socket])
+								print "Sent welcome message"
+
 							self.broadcast(str(self.parseMessage(bytearray(data))))
 						except ValueError:
 							print '[Debug]: JSON Parse Fail: ' + data
 							tempname = self.clients[_socket].getName()
+							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
 							self.clients[_socket].died()
-							self.broadcast(str('{"message": "'+ str(tempname) +' has left the room.", "type": "system", "name": "System", "avi": "profile.png"}'))
+							self.disconnect(_socket)
 						except Exception, e:
 							print e
 			cycle +=1 #debugging purposes
