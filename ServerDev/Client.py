@@ -11,15 +11,14 @@ class Client:
 		self.usersock = usersock
 		self.parent = parent
 		self.handshake_completed = False
-
+	def getName(self):
+		return self.name
 	'''
 		Relays message to the client list
 	'''
 	def sendMessage(self, message):
-		# TODO: handle different types of packets
-		# if you're reading this, you're gay D:
+		#stfu
 		self.parent.broadcast(message)
-
 
 	'''
 		Deletes self from the client list when it is disconnected.

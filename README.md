@@ -1,2 +1,2 @@
 # Polar
-An HTML5 chat service
+The backend server of Polar, a web chat service.

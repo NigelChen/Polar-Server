@@ -63,13 +63,18 @@ class server:
 							headers = self.getSockKey(headers[headers.index(headers[headers.index('Sec-WebSocket-Key: ')+len('Sec-WebSocket-Key: '):]):].split("\r\n")[0])
 							headers = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + headers + "\r\n\r\n"
 							user.usersock.send(headers)
+							data = "1"
 							user.handshake_completed = True
 					except: pass
 
-					if not data:
-						try: self.clients[_socket].died()
+					if not data or len(data) <=0:
+						try:
+							tempname = self.clients[_socket].getName()
+							self.clients[_socket].died()
+							self.broadcast(str('{"message": "'+ str(tempname) +' has left the room.", "type": "system", "name": "System", "avi": "profile.png"}'))
 						except: continue
 					else:
+
 						try:
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
@@ -77,19 +82,27 @@ class server:
 							# Get the name from the user
 							if parsed['type'] == "join":
 								user.name = parsed['name']
-								print user.name
-								
-								# No idea how to broadcast these types of messages from server -> client :(
-								# TODO: Notify the user who all is currently in the chat room (Probably get the client to append them to the userlist)
-								self.broadcast("{'message': 'Welcome to the chat server!', 'type': 'system', 'name': 'System', 'avi': 'profile.png'}")
+								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}',self.clients[_socket])
 							self.broadcast(str(self.parseMessage(bytearray(data))))
 						except ValueError:
-							# Typically when the user disconnects, python throws up a ValueError saying that No JSON could be decoded, so that is an indication that the user has left
-							# TODO: Server notifies everyone that the user has left the chat room
-							print "User has decided to disconnect, notify everyone that he left"
+							print '[Debug]: JSON Parse Fail: ' + data
+							tempname = self.clients[_socket].getName()
+							self.clients[_socket].died()
+							self.broadcast(str('{"message": "'+ str(tempname) +' has left the room.", "type": "system", "name": "System", "avi": "profile.png"}'))
 						except Exception, e:
-							pass
+							print e
 			cycle +=1 #debugging purposes
+	'''
+		Sends a message to a specific user
+		takes in a client handler and a message
+	'''
+	def send_to_client(self,msg,client):
+		print msg
+		for j in self.pack_message(msg):
+			if isinstance(j, (int, long)):
+				client.usersock.send(chr(j))
+			else:
+				client.usersock.send(j)
 	'''
 		Initialize all the socket stuff here
 	'''
