@@ -70,34 +70,51 @@ class server:
 					if not data or len(data) <=0:
 						try:
 							tempname = self.clients[_socket].getName()
-							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
 							self.clients[_socket].died()
-							self.disconnect(_socket)
+							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
 						except: continue
 					else:
-
 						try:
+							#NOTE FOR CLIENT REPO: Client will NEED to encode any special characters or else they will be kicked off
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
-							
+
 							# Get the name from the user
 							if parsed['type'] == "join":
 								user.name = parsed['name']
-								print user.name
 								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
 								onlineUsers = []
+								#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
+								#ex) "name,alice,bob"
 								for i in self.clients:
-									onlineUsers.append(self.clients[i].name)
-								self.send_to_client('{"message": "'+ ', '.join(onlineUsers) +'", "type": "onSet", "name": "System", "avi": "n/a"}', self.clients[_socket])
-								print "Sent welcome message"
-
-							self.broadcast(str(self.parseMessage(bytearray(data))))
+									onlineUsers.append(self.clients[i].getName())
+								data = {}
+								data['message'] = ",".join(onlineUsers)
+								data['type'] = 'onSet'
+								data['name'] = 'System'
+								data['avi'] = 'n/a'
+								json_data = json.dumps(data)
+								self.send_to_client(str(json_data), self.clients[_socket])
+							data = {}
+							for i in parsed:
+								data[i] = parsed[i]
+							json_data = json.dumps(data)
+							self.broadcast(str(json_data))
 						except ValueError:
-							print '[Debug]: JSON Parse Fail: ' + data
+							#The cases where this will activate:
+							#1) unformatted JSON packets are sent
+							#2) a user disconnects
+							#3) special characters are sent
+							print '[Debug]: JSON Parse Fail: ' + self.parseMessage(bytearray(data))
 							tempname = self.clients[_socket].getName()
-							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
 							self.clients[_socket].died()
-							self.disconnect(_socket)
+							data = {}
+							data['message'] = tempname
+							data['type'] = 'leave'
+							data['name'] = 'System'
+							data['avi'] = 'profile.png'
+							json_data = json.dumps(data)
+							self.broadcast(str(json_data))
 						except Exception, e:
 							print e
 			cycle +=1 #debugging purposes
@@ -106,7 +123,6 @@ class server:
 		takes in a client handler and a message
 	'''
 	def send_to_client(self,msg,client):
-		print msg
 		for j in self.pack_message(msg):
 			if isinstance(j, (int, long)):
 				client.usersock.send(chr(j))
