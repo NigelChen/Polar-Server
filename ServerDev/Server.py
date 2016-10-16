@@ -6,6 +6,7 @@ import base64
 import json
 import gc
 import Client
+from urllib import quote
 
 class server:
 
@@ -63,25 +64,24 @@ class server:
 							headers = self.getSockKey(headers[headers.index(headers[headers.index('Sec-WebSocket-Key: ')+len('Sec-WebSocket-Key: '):]):].split("\r\n")[0])
 							headers = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + headers + "\r\n\r\n"
 							user.usersock.send(headers)
-							data = "1"
+							data = None
 							user.handshake_completed = True
 					except: pass
 
-					if not data or len(data) <=0:
-						try:
-							tempname = self.clients[_socket].getName()
-							self.clients[_socket].died()
-							self.broadcast(str('{"message": "'+tempname+'", "type": "leave", "name": "System", "avi": "profile.png"}'))
-						except: continue
+					if not data or len(data) <=1:
+						#The tested case(s) when this happens:
+						#1) When a user just completes a handshake
+						print '[Debug] NO DATA PASSED: PASS'
+						pass 
 					else:
 						try:
-							#NOTE FOR CLIENT REPO: Client will NEED to encode any special characters or else they will be kicked off
+							#NOTE FOR CLIENT REPO: The server will escape certain characters into HTML entities to prevent XSS.
+							#it will be the client's responsibility to escape the HTML entities SAFELY.
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
 
 							# Get the name from the user
 							if parsed['type'] == "join":
-								user.name = parsed['name']
 								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
 								onlineUsers = []
 								#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
@@ -95,10 +95,15 @@ class server:
 								data['avi'] = 'n/a'
 								json_data = json.dumps(data)
 								self.send_to_client(str(json_data), self.clients[_socket])
-							data = {}
+
+		
+							dataz = {}
 							for i in parsed:
-								data[i] = parsed[i]
-							json_data = json.dumps(data)
+								#for nitin:
+								
+								ayy = parsed[i]
+								dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
+							json_data = json.dumps(dataz)
 							self.broadcast(str(json_data))
 						except ValueError:
 							#The cases where this will activate:
@@ -108,16 +113,13 @@ class server:
 							print '[Debug]: JSON Parse Fail: ' + self.parseMessage(bytearray(data))
 							tempname = self.clients[_socket].getName()
 							self.clients[_socket].died()
-							data = {}
-							data['message'] = tempname
-							data['type'] = 'leave'
-							data['name'] = 'System'
-							data['avi'] = 'profile.png'
-							json_data = json.dumps(data)
-							self.broadcast(str(json_data))
-						except Exception, e:
-							print e
+							self.broadcast(str(json.dumps({'message':tempname,
+								'type':'leave',
+								'name':'System',
+								'avi':'profile.png'})))
+						
 			cycle +=1 #debugging purposes
+
 	'''
 		Sends a message to a specific user
 		takes in a client handler and a message
