@@ -118,6 +118,8 @@ class server:
 
 		
 							dataz = {}
+			
+							# Loops through the incoming data and then sanitizes the data
 							for i in parsed:
 								#for nitin:
 								
