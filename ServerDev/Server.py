@@ -8,6 +8,14 @@ import gc
 import Client
 from urllib import quote
 
+
+
+
+#properties:
+# - The server will kick out the client if the server detects that the client tampered with the client-side code if the client breaks protocol
+# - Any special characters sent to the server will automatically be turned into HTML entities. 
+
+
 class server:
 
 
@@ -47,6 +55,7 @@ class server:
 				continue
 
 			for _socket in read:
+				send = True
 				# New connection
 				if _socket == self.sock:
 					_client, _addr = self.sock.accept()
@@ -56,7 +65,9 @@ class server:
 					user = self.clients[_socket]
 
 					try:
+
 						data = _socket.recv(1024)
+						print '[Debug] length of data: ' + str(len(data))
 						#check if user has completed the websocket handshake
 						if not user.handshake_completed:
 							###websocket handshake
@@ -79,6 +90,15 @@ class server:
 							#it will be the client's responsibility to escape the HTML entities SAFELY.
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
+							
+							for i in parsed:
+								#NOTE FOR CLIENT REPO: max message length is 256 characters while the avatar, names, etc. max length is 32 characters long
+								#if breaks rules, then the server kicks out the user, indicating that the client tampered with client-side code.
+								if len(parsed[i]) > 32 or (i == "message" and len(parsed[i]) > 256): 
+									print '[Debug] DISCONNECTED CLIENT FOR BREAKING PROTOCOL'
+									self.kick(_socket)
+									parsed['type'] = "ERROR"
+									continue
 
 							# Get the name from the user
 							if parsed['type'] == "join":
@@ -109,16 +129,19 @@ class server:
 							#The cases where this will activate:
 							#1) unformatted JSON packets are sent
 							#2) a user disconnects
-							#3) special characters are sent
-							print '[Debug]: JSON Parse Fail: ' + self.parseMessage(bytearray(data))
-							tempname = self.clients[_socket].getName()
-							self.clients[_socket].died()
-							self.broadcast(str(json.dumps({'message':tempname,
-								'type':'leave',
-								'name':'System',
-								'avi':'profile.png'})))
+							self.kick(_socket)
 						
 			cycle +=1 #debugging purposes
+	'''
+		Kicks a user off the server
+	'''
+	def kick(self,c):
+		tempname = self.clients[c].getName()
+		self.clients[c].died()
+		self.broadcast(str(json.dumps({'message':tempname,
+			'type':'leave',
+			'name':'System',
+			'avi':'profile.png'})))
 
 	'''
 		Sends a message to a specific user
