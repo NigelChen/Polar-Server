@@ -1,2 +1,3 @@
 Stuff todo / ideas goes here
-• Fix bugs (idk)
+• Fix bugs
+• Make UI all pretty
