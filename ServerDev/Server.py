@@ -91,6 +91,24 @@ class server:
 							parsed = json.loads(str(self.parseMessage(bytearray(data))))
 							print '[Debug] '+ str(parsed)
 							
+							'''
+								Somebody better fix these damn bugs
+								                                   _
+								       /      \         __      _\( )/_
+								    \  \  ,,  /  /   | /  \ |    /(O)\ 
+								     '-.`\()/`.-'   \_\\  //_/    _.._   _\(o)/_  //  \\
+								    .--_'(  )'_--.   .'/()\'.   .'    '.  /(_)\  _\\()//_
+								   / /` /`""`\ `\ \   \\  //   /   __   \       / //  \\ \
+								    |  |  ><  |  |          ,  |   ><   |  ,     | \__/ |
+								    \  \      /  /         . \  \      /  / .              _
+								   _    '.__.'    _\(O)/_   \_'--`(  )'--'_/     __     _\(_)/_
+								_\( )/_            /(_)\      .--'/()\'--.    | /  \ |   /(O)\
+								 /(O)\  //  \\         _     /  /` '' `\  \  \_\\  //_/
+								       _\\()//_     _\(_)/_    |        |      //()\\ 
+								      / //  \\ \     /(o)\      \      /       \\  //
+								       | \__/ |
+							'''
+							
 							for i in parsed:
 								#NOTE FOR CLIENT REPO: max message length is 256 characters while the avatar, names, etc. max length is 32 characters long
 								#if breaks rules, then the server kicks out the user, indicating that the client tampered with client-side code.
