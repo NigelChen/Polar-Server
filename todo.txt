@@ -1,4 +1,0 @@
-Stuff todo / ideas goes here
-• Fix bugs
-• Make UI all pretty
-• What things do we still have to do for the backend? [remove this after you reply]
