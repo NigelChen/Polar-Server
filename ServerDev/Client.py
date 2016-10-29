@@ -36,6 +36,4 @@ class Client:
 			print "Disconnected the client"
 		finally:
 			del self.parent.clients[self.usersock]
-			msg = '{"type": "message", "body": "disconnected", "name": "system"}'
-			self.parent.broadcast(msg)
 

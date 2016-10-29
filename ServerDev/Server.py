@@ -103,12 +103,15 @@ class server:
 							if not (parsed['type'] == "ERROR"):
 								# Get the name from the user
 								if parsed['type'] == "join":
-									self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
+								
 									onlineUsers = []
 									#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
 									#ex) "name,alice,bob"
+									self.clients[_socket].name = parsed['name']
 									for i in self.clients:
-										onlineUsers.append(self.clients[i].getName())
+										if not i == _socket:
+											onlineUsers.append(self.clients[i].getName())
+									print '***REMOVED***: '  + str(onlineUsers)
 									data = {}
 									data['message'] = ",".join(onlineUsers)
 									data['type'] = 'onSet'
@@ -116,42 +119,12 @@ class server:
 									data['avi'] = 'n/a'
 									json_data = json.dumps(data)
 									self.send_to_client(str(json_data), self.clients[_socket])
-
-
 								dataz = {}
 								for i in parsed:
 									ayy = parsed[i]
 									dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
 								json_data = json.dumps(dataz)
-								self.broadcast(str(json_data))
-								continue
-
-								# Get the name from the user
-								if parsed['type'] == "join":
-									self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
-									onlineUsers = []
-									#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
-									#ex) "name,alice,bob"
-									for i in self.clients:
-										onlineUsers.append(self.clients[i].getName())
-									data = {}
-									data['message'] = ",".join(onlineUsers)
-									data['type'] = 'onSet'
-									data['name'] = 'System'
-									data['avi'] = 'n/a'
-									json_data = json.dumps(data)
-									self.send_to_client(str(json_data), self.clients[_socket])
-
-
-								dataz = {}
-
-								# Loops through the incoming data and then sanitizes the data
-								for i in parsed:
-									#for nitin:
-
-									ayy = parsed[i]
-									dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
-								json_data = json.dumps(dataz)
+								print json_data
 								self.broadcast(str(json_data))
 						except ValueError:
 							#The cases where this will activate:
