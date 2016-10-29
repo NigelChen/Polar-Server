@@ -124,35 +124,35 @@ class server:
 									dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
 								json_data = json.dumps(dataz)
 								self.broadcast(str(json_data))
-									continue
+								continue
 
-							# Get the name from the user
-							if parsed['type'] == "join":
-								self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
-								onlineUsers = []
-								#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
-								#ex) "name,alice,bob"
-								for i in self.clients:
-									onlineUsers.append(self.clients[i].getName())
-								data = {}
-								data['message'] = ",".join(onlineUsers)
-								data['type'] = 'onSet'
-								data['name'] = 'System'
-								data['avi'] = 'n/a'
-								json_data = json.dumps(data)
-								self.send_to_client(str(json_data), self.clients[_socket])
+								# Get the name from the user
+								if parsed['type'] == "join":
+									self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
+									onlineUsers = []
+									#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
+									#ex) "name,alice,bob"
+									for i in self.clients:
+										onlineUsers.append(self.clients[i].getName())
+									data = {}
+									data['message'] = ",".join(onlineUsers)
+									data['type'] = 'onSet'
+									data['name'] = 'System'
+									data['avi'] = 'n/a'
+									json_data = json.dumps(data)
+									self.send_to_client(str(json_data), self.clients[_socket])
 
 
-							dataz = {}
+								dataz = {}
 
-							# Loops through the incoming data and then sanitizes the data
-							for i in parsed:
-								#for nitin:
+								# Loops through the incoming data and then sanitizes the data
+								for i in parsed:
+									#for nitin:
 
-								ayy = parsed[i]
-								dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
-							json_data = json.dumps(dataz)
-							self.broadcast(str(json_data))
+									ayy = parsed[i]
+									dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
+								json_data = json.dumps(dataz)
+								self.broadcast(str(json_data))
 						except ValueError:
 							#The cases where this will activate:
 							#1) unformatted JSON packets are sent
