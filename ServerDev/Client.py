@@ -1,8 +1,12 @@
-import base64, hashlib
+import base64, hashlib,time
 
 class Client:
 	# Stores the name of the user in this variable
 	name = ""
+
+
+
+
 
 	'''
 		Initializes information on the client
