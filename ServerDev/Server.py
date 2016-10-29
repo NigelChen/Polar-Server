@@ -82,6 +82,7 @@ class server:
 					if not data or len(data) <=1:
 						#The tested case(s) when this happens:
 						#1) When a user just completes a handshake
+
 						print '[Debug] NO DATA PASSED: PASS'
 						pass
 					else:
@@ -93,10 +94,36 @@ class server:
 							for i in parsed:
 								#NOTE FOR CLIENT REPO: max message length is 256 characters while the avatar, names, etc. max length is 32 characters long
 								#if breaks rules, then the server kicks out the user, indicating that the client tampered with client-side code.
-								if len(parsed[i]) > 32 or (i == "message" and len(parsed[i]) > 256):
+								#if the user supplies a null user/avatar, then user is kicked
+								if parsed[i] == None or (len(parsed[i]) > 256 or (i == "message" and len(parsed[i]) > 256)):
 									print '[Debug] DISCONNECTED CLIENT FOR BREAKING PROTOCOL'
 									self.kick(_socket)
 									parsed['type'] = "ERROR"
+									break
+							if not (parsed['type'] == "ERROR"):
+								# Get the name from the user
+								if parsed['type'] == "join":
+									self.send_to_client('{"message": "Welcome to the chat server!", "type": "system", "name": "System", "avi": "profile.png"}', self.clients[_socket])
+									onlineUsers = []
+									#NOTE FOR CLIENT REPO: Client will NEED to parse the following user format in the "message" field...
+									#ex) "name,alice,bob"
+									for i in self.clients:
+										onlineUsers.append(self.clients[i].getName())
+									data = {}
+									data['message'] = ",".join(onlineUsers)
+									data['type'] = 'onSet'
+									data['name'] = 'System'
+									data['avi'] = 'n/a'
+									json_data = json.dumps(data)
+									self.send_to_client(str(json_data), self.clients[_socket])
+
+
+								dataz = {}
+								for i in parsed:
+									ayy = parsed[i]
+									dataz[i] = quote(ayy.encode('utf-8')) #quote() to escape any HTML entities just incase
+								json_data = json.dumps(dataz)
+								self.broadcast(str(json_data))
 									continue
 
 							# Get the name from the user
