@@ -110,9 +110,7 @@ class server:
 									self.clients[_socket].name = parsed['name']
 									for i in self.clients:
 										if not i == _socket:
-											onlineUsers.append(self.clients[i].getName())
-									print '***REMOVED***: '  + str(onlineUsers)
-									data = {}
+											onlineUsers.append(self.clients[i].getName())									data = {}
 									data['message'] = ",".join(onlineUsers)
 									data['type'] = 'onSet'
 									data['name'] = 'System'
